@@ -140,7 +140,7 @@ func TestResolveFeatureFlags(t *testing.T) {
 	tests := []struct {
 		name            string
 		enabledFeatures []string
-		metaFeatures    []string
+		insidersMode    bool
 		expectedFlags   []string
 		unexpectedFlags []string
 	}{
@@ -156,15 +156,15 @@ func TestResolveFeatureFlags(t *testing.T) {
 			expectedFlags:   []string{MCPAppsFeatureFlag},
 		},
 		{
-			name:            "insiders meta feature enables insiders flags",
+			name:            "insiders mode enables insiders flags",
 			enabledFeatures: nil,
-			metaFeatures:    []string{MetaFeatureFlagInsiders},
+			insidersMode:    true,
 			expectedFlags:   InsidersFeatureFlags,
 		},
 		{
-			name:            "insiders meta feature enables internal-only flags",
+			name:            "insiders mode enables internal-only flags",
 			enabledFeatures: nil,
-			metaFeatures:    []string{MetaFeatureFlagInsiders},
+			insidersMode:    true,
 			expectedFlags:   []string{FeatureFlagIFCLabels},
 		},
 		{
@@ -187,7 +187,7 @@ func TestResolveFeatureFlags(t *testing.T) {
 		{
 			name:            "explicit plus insiders deduplicates",
 			enabledFeatures: []string{MCPAppsFeatureFlag},
-			metaFeatures:    []string{MetaFeatureFlagInsiders},
+			insidersMode:    true,
 			expectedFlags:   InsidersFeatureFlags,
 		},
 	}
@@ -195,7 +195,7 @@ func TestResolveFeatureFlags(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := ResolveFeatureFlags(tt.enabledFeatures, tt.metaFeatures...)
+			result := ResolveFeatureFlags(tt.enabledFeatures, tt.insidersMode)
 			for _, flag := range tt.expectedFlags {
 				assert.True(t, result[flag], "expected flag %q to be enabled", flag)
 			}

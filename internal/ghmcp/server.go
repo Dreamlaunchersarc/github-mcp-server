@@ -344,12 +344,9 @@ func RunStdioServer(cfg StdioServerConfig) error {
 
 // createFeatureChecker returns a FeatureFlagChecker that resolves features
 // using the centralized ResolveFeatureFlags function. For the local server,
-// features are resolved once at startup from --features CLI flag and meta flags.
+// features are resolved once at startup from --features CLI flag and insiders mode.
 func createFeatureChecker(enabledFeatures []string, insidersMode bool) inventory.FeatureFlagChecker {
-	featureSet := github.ResolveFeatureFlags(
-		enabledFeatures,
-		github.MetaFeatureFlagsForInsiders(insidersMode)...,
-	)
+	featureSet := github.ResolveFeatureFlags(enabledFeatures, insidersMode)
 	return func(_ context.Context, flagName string) (bool, error) {
 		return featureSet[flagName], nil
 	}
