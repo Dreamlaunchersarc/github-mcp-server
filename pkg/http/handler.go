@@ -353,8 +353,12 @@ func buildStaticInventory(cfg *ServerConfig, t translations.TranslationHelperFun
 		return github.AllTools(t), github.AllResources(t), github.AllPrompts(t)
 	}
 
+	// Static filtering defines an upper bound for all requests. Do not apply
+	// feature flags here: HTTP feature flags can come from request context
+	// (/insiders, X-MCP-Features), so variants must be preserved until the
+	// per-request inventory evaluates them.
 	ctx := context.Background()
-	return inv.AvailableTools(ctx), inv.AvailableResourceTemplates(ctx), inv.AvailablePrompts(ctx)
+	return inv.AvailableToolsWithoutFeatureFiltering(ctx), inv.AvailableResourceTemplatesWithoutFeatureFiltering(ctx), inv.AvailablePromptsWithoutFeatureFiltering(ctx)
 }
 
 // InventoryFiltersForRequest applies filters to the inventory builder
