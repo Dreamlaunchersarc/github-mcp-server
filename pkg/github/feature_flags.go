@@ -1,10 +1,18 @@
 package github
 
+import "slices"
+
 // MCPAppsFeatureFlag is the feature flag name for MCP Apps (interactive UI forms).
 const MCPAppsFeatureFlag = "remote_mcp_ui_apps"
 
 // FeatureFlagCSVOutput is the feature flag name for CSV output on list tools.
 const FeatureFlagCSVOutput = "csv_output"
+
+// FeatureFlagIFCLabels is the feature flag name for IFC security labels in tool results.
+const FeatureFlagIFCLabels = "ifc_labels"
+
+// MetaFeatureFlagInsiders is the meta feature flag name for insiders mode.
+const MetaFeatureFlagInsiders = "insiders"
 
 // AllowedFeatureFlags is the allowlist of feature flags that can be enabled
 // by users via --features CLI flag or X-MCP-Features HTTP header.
@@ -24,37 +32,45 @@ var AllowedFeatureFlags = []string{
 var InsidersFeatureFlags = []string{
 	MCPAppsFeatureFlag,
 	FeatureFlagCSVOutput,
+	FeatureFlagIFCLabels,
+}
+
+// MetaFeatureFlags maps meta feature flags to the concrete feature flags they enable.
+var MetaFeatureFlags = map[string][]string{
+	MetaFeatureFlagInsiders: InsidersFeatureFlags,
 }
 
 // FeatureFlags defines runtime feature toggles that adjust tool behavior.
 type FeatureFlags struct {
 	LockdownMode bool
+
+	// Deprecated: insiders is resolved into concrete feature flags.
 	InsidersMode bool
 }
 
+// MetaFeatureFlagsForInsiders returns the meta feature flags enabled by insiders mode.
+func MetaFeatureFlagsForInsiders(enabled bool) []string {
+	if !enabled {
+		return nil
+	}
+	return []string{MetaFeatureFlagInsiders}
+}
+
 // ResolveFeatureFlags computes the effective set of enabled feature flags by:
-//  1. Taking explicitly enabled features (from CLI flags or HTTP headers)
-//  2. Adding insiders-expanded features when insiders mode is active
-//  3. Validating all features against the AllowedFeatureFlags allowlist
+//  1. Taking explicitly enabled features validated against AllowedFeatureFlags
+//  2. Adding concrete features expanded from enabled meta feature flags
 //
 // Returns a set (map) for O(1) lookup by the feature checker.
-func ResolveFeatureFlags(enabledFeatures []string, insidersMode bool) map[string]bool {
-	allowed := make(map[string]bool, len(AllowedFeatureFlags))
-	for _, f := range AllowedFeatureFlags {
-		allowed[f] = true
-	}
-
+func ResolveFeatureFlags(enabledFeatures []string, enabledMetaFeatures ...string) map[string]bool {
 	effective := make(map[string]bool)
 	for _, f := range enabledFeatures {
-		if allowed[f] {
+		if slices.Contains(AllowedFeatureFlags, f) {
 			effective[f] = true
 		}
 	}
-	if insidersMode {
-		for _, f := range InsidersFeatureFlags {
-			if allowed[f] {
-				effective[f] = true
-			}
+	for _, metaFeature := range enabledMetaFeatures {
+		for _, f := range MetaFeatureFlags[metaFeature] {
+			effective[f] = true
 		}
 	}
 	return effective

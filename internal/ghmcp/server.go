@@ -130,7 +130,6 @@ func NewStdioMCPServer(ctx context.Context, cfg github.MCPServerConfig) (*mcp.Se
 		cfg.Translator,
 		github.FeatureFlags{
 			LockdownMode: cfg.LockdownMode,
-			InsidersMode: cfg.InsidersMode,
 		},
 		cfg.ContentWindowSize,
 		featureChecker,
@@ -220,7 +219,7 @@ type StdioServerConfig struct {
 	// LockdownMode indicates if we should enable lockdown mode
 	LockdownMode bool
 
-	// InsidersMode indicates if we should enable experimental features
+	// InsidersMode expands to the curated set of feature flags enabled for insiders.
 	InsidersMode bool
 
 	// ExcludeTools is a list of tool names to disable regardless of other settings.
@@ -337,9 +336,12 @@ func RunStdioServer(cfg StdioServerConfig) error {
 
 // createFeatureChecker returns a FeatureFlagChecker that resolves features
 // using the centralized ResolveFeatureFlags function. For the local server,
-// features are resolved once at startup from --features CLI flag + insiders mode.
+// features are resolved once at startup from --features CLI flag and meta flags.
 func createFeatureChecker(enabledFeatures []string, insidersMode bool) inventory.FeatureFlagChecker {
-	featureSet := github.ResolveFeatureFlags(enabledFeatures, insidersMode)
+	featureSet := github.ResolveFeatureFlags(
+		enabledFeatures,
+		github.MetaFeatureFlagsForInsiders(insidersMode)...,
+	)
 	return func(_ context.Context, flagName string) (bool, error) {
 		return featureSet[flagName], nil
 	}
@@ -364,9 +366,6 @@ func addUserAgentsMiddleware(cfg github.MCPServerConfig, restClient *gogithub.Cl
 				message.Params.ClientInfo.Name,
 				message.Params.ClientInfo.Version,
 			)
-			if cfg.InsidersMode {
-				userAgent += " (insiders)"
-			}
 
 			restClient.UserAgent = userAgent
 

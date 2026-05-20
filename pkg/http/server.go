@@ -88,7 +88,7 @@ type ServerConfig struct {
 	// EnabledFeatures is a list of feature flags that are enabled.
 	EnabledFeatures []string
 
-	// InsidersMode indicates if we should enable experimental features.
+	// InsidersMode expands to the curated set of feature flags enabled for insiders.
 	InsidersMode bool
 }
 
@@ -235,8 +235,7 @@ func initGlobalToolScopeMap(t translations.TranslationHelperFunc) error {
 }
 
 // createHTTPFeatureChecker creates a feature checker that resolves static CLI
-// features plus per-request header features and insiders mode, then validates
-// against the centralized AllowedFeatureFlags allowlist.
+// features plus per-request header features and meta features.
 func createHTTPFeatureChecker(enabledFeatures []string, insidersMode bool) inventory.FeatureFlagChecker {
 	return func(ctx context.Context, flag string) (bool, error) {
 		headerFeatures := ghcontext.GetHeaderFeatures(ctx)
@@ -244,7 +243,8 @@ func createHTTPFeatureChecker(enabledFeatures []string, insidersMode bool) inven
 		features = append(features, enabledFeatures...)
 		features = append(features, headerFeatures...)
 
-		effective := github.ResolveFeatureFlags(features, insidersMode || ghcontext.IsInsidersMode(ctx))
+		metaFeatures := github.MetaFeatureFlagsForInsiders(insidersMode || ghcontext.IsInsidersMode(ctx))
+		effective := github.ResolveFeatureFlags(features, metaFeatures...)
 		return effective[flag], nil
 	}
 }

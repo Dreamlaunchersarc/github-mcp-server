@@ -322,8 +322,7 @@ func hasStaticConfig(cfg *ServerConfig) bool {
 		cfg.EnabledToolsets != nil ||
 		cfg.EnabledTools != nil ||
 		cfg.DynamicToolsets ||
-		len(cfg.ExcludeTools) > 0 ||
-		cfg.InsidersMode
+		len(cfg.ExcludeTools) > 0
 }
 
 // buildStaticInventory pre-filters the full tool/resource/prompt universe using

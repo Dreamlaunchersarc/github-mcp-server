@@ -88,10 +88,22 @@ func TestCreateHTTPFeatureChecker(t *testing.T) {
 			wantEnabled:    true,
 		},
 		{
+			name:           "internal-only flag in header is ignored",
+			flagName:       github.FeatureFlagIFCLabels,
+			headerFeatures: []string{github.FeatureFlagIFCLabels},
+			wantEnabled:    false,
+		},
+		{
 			name:           "static insiders enables insiders flags without route context",
 			staticInsiders: true,
 			flagName:       github.FeatureFlagCSVOutput,
 			wantEnabled:    true,
+		},
+		{
+			name:         "insiders mode enables internal-only insiders flags",
+			flagName:     github.FeatureFlagIFCLabels,
+			insidersMode: true,
+			wantEnabled:  true,
 		},
 		{
 			name:         "insiders mode does not enable granular flags",

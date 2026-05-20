@@ -403,7 +403,6 @@ func (d *RequestDeps) GetT() translations.TranslationHelperFunc { return d.T }
 func (d *RequestDeps) GetFlags(ctx context.Context) FeatureFlags {
 	return FeatureFlags{
 		LockdownMode: d.lockdownMode && ghcontext.IsLockdownMode(ctx),
-		InsidersMode: ghcontext.IsInsidersMode(ctx),
 	}
 }
 
